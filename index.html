@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>逆抚 · 倒错方块 — 平子真子的颠倒世界</title>
+<style>
+  :root{
+    --bg-0:#0a0418;
+    --bg-1:#1a0b2e;
+    --bg-2:#2d1b4e;
+    --gold:#f4c430;
+    --gold-soft:#ffd86b;
+    --cyan:#4fc3f7;
+    --violet:#b388ff;
+    --crimson:#e91e63;
+    --ink:#0b0617;
+    --line:rgba(244,196,48,.28);
+    --panel:rgba(13,6,28,.72);
+    --panel-2:rgba(28,12,55,.55);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;width:100%;overflow:hidden}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;
+    color:#e9e4f5;
+    background:
+      radial-gradient(ellipse at 78% 18%, rgba(244,196,48,.10), transparent 42%),
+      radial-gradient(ellipse at 18% 82%, rgba(179,136,255,.14), transparent 45%),
+      #0a0418;
+    -webkit-font-smoothing:antialiased;
+    user-select:none;
+  }
+  /* 左侧竖幅人物立绘：脸部在上方露出，不被棋盘遮挡 */
+  .bg-char{
+    position:fixed; left:0; top:0; height:100vh; width:min(34vw,480px);
+    background:
+      linear-gradient(180deg, rgba(8,3,20,0.15), rgba(8,3,20,0.55) 85%),
+      url('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=BLEACH%20anime%20style%2C%20Hirako%20Shinji%2C%20full%20body%20standing%20portrait%2C%20upper%20body%20close%20up%20in%20top%20third%2C%20face%20clearly%20visible%2C%20long%20straight%20blonde%20hair%20bangs%20covering%20left%20eye%20only%2C%20single%20brown%20eye%2C%20wide%20sly%20toothy%20grin%2C%20loose%20white%20dress%20shirt%20with%20black%20necktie%2C%20hands%20in%20pockets%2C%20dark%20purple%20spiritual%20energy%20smoke%2C%20night%20background%20with%20full%20moon%2C%20gold%20and%20violet%20palette%2C%20retro%20anime%20illustration%2C%20no%20text&image_size=portrait_16_9') top center / cover no-repeat;
+    z-index:0;
+    -webkit-mask-image:linear-gradient(90deg,#000 60%,transparent 98%);
+    mask-image:linear-gradient(90deg,#000 60%,transparent 98%);
+  }
+  /* 月亮 */
+  .moon{
+    position:fixed;top:6vh;right:8vw;width:140px;height:140px;border-radius:50%;
+    background:radial-gradient(circle at 38% 36%, #fff7d6 0%, #f4c430 46%, #b88a14 100%);
+    box-shadow:0 0 50px rgba(244,196,48,.45), inset -22px -18px 40px rgba(80,40,10,.45);
+    filter:blur(.3px);
+    z-index:0;opacity:.5;
+  }
+  .moon::after{
+    content:"";position:absolute;inset:0;border-radius:50%;
+    box-shadow:inset 14px -8px 0 0 rgba(20,10,40,.18);
+  }
+  /* 灵力粒子层 */
+  #particles{position:fixed;inset:0;z-index:1;pointer-events:none}
+  /* 装饰：假面条纹（黑黄斜纹——平子的标志色） */
+  .stripes{
+    position:fixed;left:-20%;top:-10%;width:60%;height:220px;transform:rotate(-14deg);
+    background:repeating-linear-gradient(90deg,#0a0418 0 22px,#f4c430 22px 30px,#0a0418 30px 52px);
+    opacity:.04;filter:blur(2px);z-index:0;
+  }
+  .stripes.b{left:auto;right:-25%;top:auto;bottom:-8%;transform:rotate(12deg);width:55%}
+
+  /* 主容器 */
+  .stage{
+    position:relative;z-index:5;
+    display:flex;align-items:center;justify-content:center;gap:28px;
+    height:100vh;padding:18px;
+  }
+  /* 左侧角色立绘卡 */
+  .portrait{
+    width:230px;flex:0 0 auto;
+    display:flex;flex-direction:column;gap:14px;
+  }
+  .portrait .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;padding:14px;
+    backdrop-filter:blur(8px);
+    box-shadow:0 8px 30px rgba(0,0,0,.45), inset 0 0 0 1px rgba(244,196,48,.06);
+  }
+  .silhouette{
+    position:relative;height:230px;border-radius:10px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(244,196,48,.06),rgba(179,136,255,.04) 60%,rgba(0,0,0,0));
+    border:1px solid rgba(244,196,48,.18);
+  }
+  /* 平子真子 SVG 剪影：金发、咧嘴笑、遮眼刘海、虚化面具 */
+  .silhouette svg{position:absolute;inset:0;width:100%;height:100%}
+  .nameplate{text-align:center}
+  .nameplate h2{
+    font-size:18px;letter-spacing:6px;color:var(--gold);
+    text-shadow:0 0 10px rgba(244,196,48,.4);
+  }
+  .nameplate p{font-size:11px;color:#9d8fc4;letter-spacing:2px;margin-top:4px}
+  .quote{
+    font-size:12px;line-height:1.7;color:#c9c0e6;font-style:italic;
+    border-left:2px solid var(--gold);padding-left:10px;
+  }
+  .skill{
+    font-size:11px;color:#b6a8e0;line-height:1.7;
+  }
+  .skill b{color:var(--gold);font-weight:600}
+
+  /* 中央游戏区 */
+  .game-wrap{
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+    animation:fadeUp .8s ease both;
+  }
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes glowPulse{0%,100%{text-shadow:0 0 14px rgba(244,196,48,.35),0 0 28px rgba(244,196,48,.18)}50%{text-shadow:0 0 18px rgba(244,196,48,.55),0 0 40px rgba(244,196,48,.28)}}
+  .title-bar{
+    display:flex;align-items:baseline;gap:14px;
+    font-family:"STKaiti","KaiTi",serif;position:relative;
+  }
+  .title-bar::before,.title-bar::after{
+    content:"";position:absolute;top:50%;width:40px;height:1px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  }
+  .title-bar::before{right:calc(100% + 12px)}
+  .title-bar::after{left:calc(100% + 12px)}
+  .title-bar .t1{font-size:32px;color:var(--gold);letter-spacing:10px;animation:glowPulse 3.2s ease-in-out infinite}
+  .title-bar .t2{font-size:13px;color:#9d8fc4;letter-spacing:6px}
+  .game-board{
+    position:relative;
+    padding:14px;border-radius:16px;
+    background:linear-gradient(160deg,rgba(28,12,55,.7),rgba(10,4,24,.85));
+    border:1px solid var(--line);
+    box-shadow:0 18px 60px rgba(0,0,0,.6), inset 0 0 30px rgba(179,136,255,.08), 0 0 22px rgba(244,196,48,.06);
+  }
+  /* 四角金线装饰 */
+  .game-board .corner{
+    position:absolute;width:18px;height:18px;pointer-events:none;z-index:3;
+    border:2px solid var(--gold);opacity:.85;
+  }
+  .game-board .corner.tl{top:-2px;left:-2px;border-right:none;border-bottom:none;border-top-left-radius:14px}
+  .game-board .corner.tr{top:-2px;right:-2px;border-left:none;border-bottom:none;border-top-right-radius:14px}
+  .game-board .corner.bl{bottom:-2px;left:-2px;border-right:none;border-top:none;border-bottom-left-radius:14px}
+  .game-board .corner.br{bottom:-2px;right:-2px;border-left:none;border-top:none;border-bottom-right-radius:14px}
+  /* 棋盘内的镜面边框——暗示"颠倒" */
+  .game-board::before{
+    content:"";position:absolute;inset:6px;border-radius:12px;
+    border:1px dashed rgba(179,136,255,.25);
+    pointer-events:none;
+  }
+  canvas#game{display:block;border-radius:8px;background:#070213}
+  /* 游戏结束遮罩 */
+  .overlay{
+    position:absolute;inset:14px;border-radius:8px;
+    background:rgba(8,3,20,.86);backdrop-filter:blur(4px);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    opacity:0;pointer-events:none;transition:opacity .35s ease;
+    text-align:center;
+  }
+  .overlay.show{opacity:1;pointer-events:auto}
+  .overlay.show>*{animation:fadeUp .5s ease both}
+  .overlay.show>*:nth-child(2){animation-delay:.06s}
+  .overlay.show>*:nth-child(3){animation-delay:.12s}
+  .overlay.show>*:nth-child(4){animation-delay:.18s}
+  .overlay.show>*:nth-child(5){animation-delay:.24s}
+  .overlay h3{
+    font-size:28px;color:var(--crimson);letter-spacing:6px;font-family:"STKaiti",serif;
+    text-shadow:0 0 16px rgba(233,30,99,.5),0 0 32px rgba(233,30,99,.25);
+  }
+  .overlay p{color:#c9c0e6;font-size:13px;line-height:1.7}
+  .overlay button{
+    margin-top:6px;padding:9px 24px;border-radius:20px;cursor:pointer;
+    background:linear-gradient(90deg,var(--gold),var(--gold-soft));color:#1a0b2e;
+    border:none;font-weight:700;letter-spacing:2px;font-size:13px;
+    box-shadow:0 4px 14px rgba(244,196,48,.35);
+    transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
+  }
+  .overlay button:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(244,196,48,.5);filter:brightness(1.08)}
+  .overlay button:active{transform:translateY(0)}
+  .overlay button.ghost{background:transparent;color:var(--gold);border:1px solid var(--gold);box-shadow:none}
+  .overlay button.ghost:hover{background:rgba(244,196,48,.12);box-shadow:0 0 14px rgba(244,196,48,.3)}
+  /* 难度选择按钮组 */
+  .diff-row{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;width:280px;
+  }
+  .diff{
+    padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;letter-spacing:1px;
+    background:rgba(28,12,55,.6);color:#c9c0e6;border:1px solid rgba(179,136,255,.3);
+    transition:all .15s ease;
+  }
+  .diff:hover{background:rgba(45,27,78,.85);border-color:var(--gold);color:var(--gold-soft)}
+  .diff.active{
+    background:linear-gradient(90deg,rgba(244,196,48,.18),rgba(179,136,255,.18));
+    border-color:var(--gold);color:var(--gold);font-weight:600;
+    box-shadow:0 0 12px rgba(244,196,48,.25) inset;
+  }
+  .btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  /* 音效开关 */
+  .sound-toggle{
+    margin-top:6px;font-size:11px;color:#b6a8e0;letter-spacing:2px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .sound-toggle input{accent-color:var(--gold);cursor:pointer}
+  .toggles-row{display:flex;gap:18px;justify-content:center;margin-top:6px}
+  .toggles-row .sound-toggle{margin-top:0}
+
+  /* 右侧信息面板 */
+  .panel{
+    width:210px;flex:0 0 auto;display:flex;flex-direction:column;gap:12px;
+    animation:fadeUp .8s .1s ease both;
+  }
+  .stat{
+    position:relative;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:10px 14px 10px 18px;backdrop-filter:blur(8px);
+    transition:transform .2s ease, box-shadow .2s ease;
+  }
+  .stat::before{
+    content:"";position:absolute;left:6px;top:14px;bottom:14px;width:2px;border-radius:1px;
+    background:linear-gradient(180deg,var(--gold),transparent);
+    opacity:.7;
+  }
+  .stat:hover{transform:translateX(-3px);box-shadow:0 6px 22px rgba(0,0,0,.4)}
+  .stat .lbl{font-size:10px;color:#9d8fc4;letter-spacing:3px}
+  .stat .val{font-size:24px;color:var(--gold);font-weight:700;margin-top:2px;
+    font-family:"Consolas",monospace;text-shadow:0 0 10px rgba(244,196,48,.4);
+    transition:color .2s}
+  .stat.level .val{color:var(--cyan);text-shadow:0 0 10px rgba(79,195,247,.5)}
+  .stat.rank{font-size:12px;color:#b6a8e0}
+  .stat.rank b{color:var(--violet);font-weight:600;text-shadow:0 0 8px rgba(179,136,255,.4)}
+
+  .next-box{padding:10px}
+  .next-box .lbl{font-size:10px;color:#9d8fc4;letter-spacing:3px;margin-bottom:6px}
+  canvas#next{display:block;margin:0 auto;background:rgba(7,2,19,.6);border-radius:6px}
+
+  .help{
+    font-size:11px;line-height:1.85;color:#c9c0e6;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+    backdrop-filter:blur(8px);
+  }
+  .help h4{font-size:12px;color:var(--gold);letter-spacing:3px;margin-bottom:8px;
+    font-family:"STKaiti",serif;border-bottom:1px dashed rgba(244,196,48,.25);padding-bottom:5px}
+  .help .row{display:flex;justify-content:space-between;align-items:center}
+  .help kbd{
+    background:linear-gradient(180deg,#2d1b4e,#1a0b2e);
+    border:1px solid rgba(244,196,48,.4);color:var(--gold-soft);
+    padding:2px 8px;border-radius:5px;font-family:monospace;font-size:11px;
+    box-shadow:0 2px 0 rgba(0,0,0,.4);
+    min-width:28px;text-align:center;display:inline-block;
+  }
+  .help .arrow{color:#b6a8e0}
+  .help .warn{color:var(--crimson);font-size:10px;margin-top:6px;line-height:1.5}
+
+  /* 重来按钮 */
+  .restart-btn{
+    padding:9px 12px;border-radius:10px;cursor:pointer;
+    background:rgba(28,12,55,.6);color:var(--gold);
+    border:1px solid rgba(244,196,48,.4);
+    letter-spacing:2px;font-size:12px;font-family:inherit;
+    transition:all .15s ease;
+  }
+  .restart-btn:hover{background:rgba(244,196,48,.15);box-shadow:0 0 12px rgba(244,196,48,.25)}
+  .restart-btn:active{transform:translateY(1px)}
+
+  /* 底部状态条 */
+  .footer{position:fixed;bottom:8px;left:0;right:0;text-align:center;z-index:5;
+    font-size:10px;color:#6b5d8a;letter-spacing:3px}
+
+  /* 消行特效闪光 */
+  .flash{position:absolute;inset:14px;border-radius:8px;pointer-events:none;
+    background:radial-gradient(ellipse at center, rgba(244,196,48,.35), transparent 70%);
+    opacity:0;transition:opacity .12s ease;
+  }
+  .flash.on{opacity:1}
+
+  /* 响应式 */
+  @media (max-width: 980px){
+    .portrait{display:none}
+    .panel{width:170px}
+  }
+  @media (max-width: 720px){
+    .stage{flex-direction:column;gap:10px;height:auto;padding:10px;justify-content:flex-start}
+    .panel{width:auto;flex-direction:row;flex-wrap:wrap;justify-content:center}
+    .stat{flex:1 1 90px}
+  }
+</style>
+</head>
+<body>
+
+<div class="moon"></div>
+<div class="stripes"></div>
+<div class="stripes b"></div>
+<div class="bg-char"></div>
+<canvas id="particles"></canvas>
+
+<div class="stage">
+  <!-- 左侧：平子真子立绘卡 -->
+  <aside class="portrait">
+    <div class="card">
+      <div class="silhouette">
+        <!-- 抽象"逆抚"纹章：颠倒双向箭头环绕汉字，呼应"方向感反转" -->
+        <svg viewBox="0 0 230 230" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#f4c430" stop-opacity="0.35"/>
+              <stop offset="1" stop-color="#f4c430" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="arr" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#b388ff"/>
+              <stop offset="1" stop-color="#f4c430"/>
+            </linearGradient>
+          </defs>
+          <circle cx="115" cy="115" r="100" fill="url(#halo)"/>
+          <circle cx="115" cy="115" r="92" fill="none" stroke="#f4c430" stroke-width="1.5" stroke-dasharray="3 6" opacity="0.55"/>
+          <circle cx="115" cy="115" r="76" fill="none" stroke="#b388ff" stroke-width="1" stroke-dasharray="1 5" opacity="0.6"/>
+          <!-- 中心汉字"逆" -->
+          <text x="115" y="138" text-anchor="middle" font-family="STKaiti,KaiTi,serif" font-size="78" font-weight="700" fill="#f4c430" opacity="0.92">逆</text>
+          <!-- 上下颠倒的双向箭头（暗示左右反转） -->
+          <path d="M40,115 L60,100 L60,110 L95,110 L95,120 L60,120 L60,130 Z" fill="url(#arr)" opacity="0.85"/>
+          <path d="M190,115 L170,130 L170,120 L135,120 L135,110 L170,110 L170,100 Z" fill="url(#arr)" opacity="0.85"/>
+          <!-- 小字标注 -->
+          <text x="115" y="190" text-anchor="middle" font-size="9" letter-spacing="4" fill="#9d8fc4">SAKANADE</text>
+        </svg>
+      </div>
+      <div class="nameplate">
+        <h2>平子真子</h2>
+        <p>HIRAKO SHINJI · 5番队前队长</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="quote">「放轻松点，玩个游戏吧。不过——你会感觉，整个世界都颠倒了。」</div>
+    </div>
+    <div class="card">
+      <div class="skill">
+        斩魄刀：<b>逆抚（Sakanade）</b><br>
+        能力：释放灵压使对手的<b>上下、左右、前后、视觉与方向感全部颠倒</b>。<br>
+        本作中，你的<b>方向键</b>已被逆抚所染——你以为向左，实则向右。
+      </div>
+    </div>
+  </aside>
+
+  <!-- 中央：游戏 -->
+  <div class="game-wrap">
+    <div class="title-bar">
+      <span class="t1">逆抚 · 倒错方块</span>
+      <span class="t2">SAKANADE TETRIS</span>
+    </div>
+    <div class="game-board">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <canvas id="game" width="300" height="600"></canvas>
+      <div class="flash" id="flash"></div>
+      <div class="overlay" id="overlay">
+        <h3 id="ovTitle">逆抚 · 序章</h3>
+        <p id="ovText"></p>
+        <div class="diff-row" id="diffRow">
+          <button class="diff" data-diff="easy">初级 · 现世</button>
+          <button class="diff" data-diff="normal">中级 · 虚圈</button>
+          <button class="diff" data-diff="hard">高级 · 破面</button>
+          <button class="diff" data-diff="hell">地狱 · 虚夜宫</button>
+        </div>
+        <div class="btn-row" id="btnRow">
+          <button id="restart">再战一场</button>
+          <button id="toMenu" class="ghost">返回序章</button>
+        </div>
+        <div class="toggles-row">
+          <label class="sound-toggle">
+            <input type="checkbox" id="soundOn" checked>
+            <span>音效</span>
+          </label>
+          <label class="sound-toggle">
+            <input type="checkbox" id="bgmOn" checked>
+            <span>背景音乐</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右侧：信息面板 -->
+  <aside class="panel">
+    <div class="stat"><div class="lbl">SCORE</div><div class="val" id="score">0</div></div>
+    <div class="stat level"><div class="lbl">LEVEL</div><div class="val" id="level">1</div></div>
+    <div class="stat"><div class="lbl">LINES</div><div class="val" id="lines">0</div></div>
+    <div class="stat rank" id="rank">境界：<b>现世</b></div>
+    <div class="stat next-box">
+      <div class="lbl">NEXT</div>
+      <canvas id="next" width="120" height="90"></canvas>
+    </div>
+    <div class="help">
+      <h4>逆抚操控</h4>
+      <div class="row"><span class="arrow">按 ←</span><kbd>→</kbd></div>
+      <div class="row"><span class="arrow">按 →</span><kbd>←</kbd></div>
+      <div class="row"><span class="arrow">按 ↑</span><kbd>硬降</kbd></div>
+      <div class="row"><span class="arrow">按 ↓</span><kbd>旋转</kbd></div>
+      <div class="row"><span class="arrow">按 P</span><kbd>暂停</kbd></div>
+      <div class="warn">⚠ 所有方向感已被逆抚反转。请凭直觉以外的判断操作。</div>
+    </div>
+    <button id="restartBtn" class="restart-btn">↻ 重来 (R)</button>
+  </aside>
+</div>
+
+<div class="footer">© BLEACH 致敬 · 倒错方块 · 凭灵压操作，非方向感</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ============ 灵力粒子背景 ============
+  const pCanvas = document.getElementById('particles');
+  const pCtx = pCanvas.getContext('2d');
+  let PW=0, PH=0;
+  function resizeParticles(){
+    PW = pCanvas.width = window.innerWidth;
+    PH = pCanvas.height = window.innerHeight;
+  }
+  resizeParticles();
+  window.addEventListener('resize', resizeParticles);
+
+  const particles = [];
+  for(let i=0;i<60;i++){
+    particles.push({
+      x: Math.random()*PW,
+      y: Math.random()*PH,
+      r: Math.random()*1.8+0.4,
+      vx: (Math.random()-0.5)*0.25,
+      vy: Math.random()*0.4+0.1,
+      a: Math.random()*0.5+0.15,
+      hue: Math.random()<0.5? 48 : 270  // 金 或 紫
+    });
+  }
+  function drawParticles(){
+    pCtx.clearRect(0,0,PW,PH);
+    for(const p of particles){
+      p.x += p.vx; p.y += p.vy;
+      if(p.y>PH){p.y=-5;p.x=Math.random()*PW}
+      if(p.x<-5)p.x=PW+5; if(p.x>PW+5)p.x=-5;
+      pCtx.beginPath();
+      pCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      pCtx.fillStyle = `hsla(${p.hue},90%,65%,${p.a})`;
+      pCtx.shadowColor = `hsla(${p.hue},90%,65%,0.8)`;
+      pCtx.shadowBlur = 8;
+      pCtx.fill();
+    }
+    pCtx.shadowBlur=0;
+    requestAnimationFrame(drawParticles);
+  }
+  drawParticles();
+
+  // ============ 音效系统（Web Audio API 合成，无外部资源） ============
+  const soundOn = document.getElementById('soundOn');
+  let audioCtx = null;
+  function ensureAudio(){
+    if(!audioCtx){
+      try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch(e){ audioCtx = null; }
+    }
+    if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+  function isSoundOn(){ return soundOn && soundOn.checked; }
+  // 通用音色合成
+  function tone(freq, dur, type, vol, freqEnd){
+    if(!isSoundOn()) return;
+    const ac = ensureAudio(); if(!ac) return;
+    const t0 = ac.currentTime;
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.type = type || 'square';
+    osc.frequency.setValueAtTime(freq, t0);
+    if(freqEnd) osc.frequency.exponentialRampToValueAtTime(Math.max(1,freqEnd), t0 + dur);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(vol || 0.08, t0 + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain).connect(ac.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  }
+  // 噪声（撞墙/失败用）
+  function noise(dur, vol){
+    if(!isSoundOn()) return;
+    const ac = ensureAudio(); if(!ac) return;
+    const buf = ac.createBuffer(1, ac.sampleRate * dur, ac.sampleRate);
+    const data = buf.getChannelData(0);
+    for(let i=0;i<data.length;i++) data[i] = (Math.random()*2-1) * (1 - i/data.length);
+    const src = ac.createBufferSource();
+    src.buffer = buf;
+    const gain = ac.createGain();
+    gain.gain.setValueAtTime(vol || 0.05, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
+    src.connect(gain).connect(ac.destination);
+    src.start();
+  }
+  const SFX = {
+    move(){ tone(220, 0.04, 'square', 0.05); },
+    rotate(){ tone(420, 0.06, 'triangle', 0.06, 280); },
+    lock(){ tone(140, 0.07, 'sawtooth', 0.05, 80); },
+    hardDrop(){ tone(120, 0.12, 'sawtooth', 0.08, 50); },
+    clear(n){ // n=1..4
+      const base = [330, 392, 523, 660][n-1] || 330;
+      tone(base, 0.16, 'triangle', 0.09, base*1.5);
+      setTimeout(()=>tone(base*1.5, 0.12, 'sine', 0.06), 60);
+    },
+    levelUp(){
+      [392, 523, 659, 784].forEach((f,i)=> setTimeout(()=>tone(f, 0.1, 'triangle', 0.08), i*70));
+    },
+    gameOver(){
+      [330, 277, 220, 165].forEach((f,i)=> setTimeout(()=>tone(f, 0.18, 'sawtooth', 0.09, f*0.6), i*120));
+    },
+    blocked(){ noise(0.05, 0.04); }
+  };
+
+  // ============ 背景音乐：Web Audio 合成《月夜》氛围曲（原创旋律，无需音频文件） ============
+  const bgmOn = document.getElementById('bgmOn');
+  let bgmMaster = null, bgmTimer = null, bgmStep = 0;
+  // 抒情和弦进行：Am → F → C → G
+  const CHORDS = [
+    [220.00, 261.63, 329.63],
+    [174.61, 220.00, 261.63],
+    [261.63, 329.63, 392.00],
+    [196.00, 246.94, 293.66]
+  ];
+  const ARP = [0,1,2,1,0,2,1,2];
+  function bgmInit(){
+    if(bgmMaster) return;
+    const ac = ensureAudio(); if(!ac) return;
+    bgmMaster = ac.createGain();
+    bgmMaster.gain.value = 0.14; // 总音量调低
+    // 轻延迟营造空间感
+    const delay = ac.createDelay(0.5);
+    delay.delayTime.value = 0.28;
+    const fb = ac.createGain(); fb.gain.value = 0.25;
+    const wet = ac.createGain(); wet.gain.value = 0.22;
+    bgmMaster.connect(ac.destination);
+    bgmMaster.connect(delay);
+    delay.connect(fb); fb.connect(delay);
+    delay.connect(wet); wet.connect(ac.destination);
+  }
+  function bgmNote(freq, dur, vol, type){
+    const ac = audioCtx; if(!ac || !bgmMaster) return;
+    const t = ac.currentTime;
+    const osc = ac.createOscillator();
+    osc.type = type || 'triangle';
+    osc.frequency.value = freq;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g).connect(bgmMaster);
+    osc.start(t);
+    osc.stop(t + dur + 0.05);
+  }
+  function bgmTick(){
+    const chord = CHORDS[Math.floor(bgmStep/8) % 4];
+    bgmNote(chord[ARP[bgmStep % 8]], 1.1, 0.35, 'triangle');   // 琶音
+    if(bgmStep % 8 === 0) bgmNote(chord[0]/2, 1.8, 0.3, 'sine'); // 低音铺底
+    bgmStep++;
+  }
+  function tryStartBgm(){
+    if(bgmTimer || !bgmOn.checked) return;
+    ensureAudio();
+    bgmInit();
+    if(!bgmMaster) return;
+    bgmTick();
+    bgmTimer = setInterval(bgmTick, 420); // ≈BPM 71 八分音符，舒缓
+  }
+  function stopBgm(){
+    if(bgmTimer){ clearInterval(bgmTimer); bgmTimer = null; }
+  }
+  bgmOn.addEventListener('change', function(){
+    if(bgmOn.checked) tryStartBgm();
+    else stopBgm();
+  });
+  // 浏览器自动播放策略：首次交互后启动
+  document.addEventListener('pointerdown', tryStartBgm);
+  document.addEventListener('keydown', tryStartBgm);
+
+  // ============ 俄罗斯方块核心 ============
+  const COLS=10, ROWS=20, BLOCK=30;
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const nextCanvas = document.getElementById('next');
+  const nextCtx = nextCanvas.getContext('2d');
+
+  // 7 种方块（标准 SRS 形状），配色贴近平子主题：金/紫/青/红
+  const PIECES = {
+    I:{c:'#4fc3f7', m:[[1,1,1,1]]},
+    O:{c:'#f4c430', m:[[1,1],[1,1]]},
+    T:{c:'#b388ff', m:[[0,1,0],[1,1,1]]},
+    S:{c:'#66bb6a', m:[[0,1,1],[1,1,0]]},
+    Z:{c:'#e91e63', m:[[1,1,0],[0,1,1]]},
+    L:{c:'#ffa726', m:[[0,0,1],[1,1,1]]},
+    J:{c:'#7c4dff', m:[[1,0,0],[1,1,1]]}
+  };
+  const KEYS = Object.keys(PIECES);
+
+  // 难度配置：起始等级 / 起始下落间隔(ms)；升级统一采用经典规则每 10 行一级
+  const DIFFS = {
+    easy:   { name:'现世',     startLevel:1, startInt:900 },
+    normal: { name:'虚圈',     startLevel:3, startInt:660 },
+    hard:   { name:'破面',     startLevel:5, startInt:520 },
+    hell:   { name:'虚夜宫',   startLevel:8, startInt:310 }
+  };
+  const LINES_PER_LEVEL = 10; // 经典俄罗斯方块规则：每消除 10 行升 1 级
+  let curDiff = 'easy';
+
+  let grid, cur, nextPiece, score, lines, level, dropAcc, dropInt, lastTime;
+  let running=false, paused=false, gameOver=false;
+  let animationId=null;
+
+  // 境界称号（每升一级换一个，致敬 BLEACH 世界观）
+  const RANKS = [
+    '现世','尸魂界','瀞灵廷','断界','虚圈','虚夜宫',
+    '破面','刃魄刀','卍解','假面','王属特务','灵王宫'
+  ];
+
+  function rankOf(lv){ return RANKS[Math.min(lv-1, RANKS.length-1)] || '神域'; }
+
+  function newGrid(){ return Array.from({length:ROWS},()=>Array(COLS).fill(null)); }
+
+  function randomPiece(){
+    const k = KEYS[Math.floor(Math.random()*KEYS.length)];
+    const p = PIECES[k];
+    const m = p.m.map(r=>r.slice());
+    return {
+      key:k, color:p.c, matrix:m,
+      x: Math.floor((COLS - m[0].length)/2),
+      y: -(m.length - 1)  // 底行从棋盘顶行进入，生成即检测重叠 → 触发游戏结束
+    };
+  }
+
+  function rotateMatrix(m){
+    const N=m.length, M=m[0].length;
+    const r = Array.from({length:M},()=>Array(N).fill(0));
+    for(let i=0;i<N;i++) for(let j=0;j<M;j++) r[j][N-1-i]=m[i][j];
+    return r;
+  }
+
+  function collide(piece, dx, dy, mat){
+    const m = mat || piece.matrix;
+    for(let i=0;i<m.length;i++){
+      for(let j=0;j<m[i].length;j++){
+        if(!m[i][j]) continue;
+        const nx = piece.x + j + dx;
+        const ny = piece.y + i + dy;
+        if(nx<0||nx>=COLS||ny>=ROWS) return true;
+        if(ny>=0 && grid[ny][nx]) return true;
+      }
+    }
+    return false;
+  }
+
+  function merge(piece){
+    for(let i=0;i<piece.matrix.length;i++){
+      for(let j=0;j<piece.matrix[i].length;j++){
+        if(piece.matrix[i][j]){
+          const y=piece.y+i, x=piece.x+j;
+          if(y>=0 && y<ROWS && x>=0 && x<COLS) grid[y][x] = piece.color;
+        }
+      }
+    }
+  }
+
+  function clearLines(){
+    let cleared=0;
+    for(let r=ROWS-1;r>=0;r--){
+      if(grid[r].every(c=>c)){
+        grid.splice(r,1);
+        grid.unshift(Array(COLS).fill(null));
+        cleared++; r++; // 重新检查同一行
+      }
+    }
+    if(cleared>0){
+      const pts = [0,5,10,20,40][cleared] * level; // 个位数起步，随难度(等级)提升
+      score += pts;
+      lines += cleared;
+      // 起始等级 + floor(总消行 / 10)，经典规则
+      const lv = Math.min(20, DIFFS[curDiff].startLevel + Math.floor(lines/LINES_PER_LEVEL));
+      if(lv !== level){
+        level = lv;
+        // 指数衰减：每升一级速度 ×0.85，难度全程持续上升（40ms 为极限）
+        const D = DIFFS[curDiff];
+        dropInt = Math.max(40, Math.round(D.startInt * Math.pow(0.85, level - D.startLevel)));
+        SFX.levelUp();
+      }
+      SFX.clear(cleared);
+      flash();
+      updateUI();
+    }
+  }
+
+  function flash(){
+    const f = document.getElementById('flash');
+    f.classList.add('on');
+    setTimeout(()=>f.classList.remove('on'), 130);
+  }
+
+  function spawn(){
+    cur = nextPiece || randomPiece();
+    nextPiece = randomPiece();
+    drawNext();
+    if(collide(cur,0,0)){
+      endGame();
+    }
+  }
+
+  function endGame(){
+    gameOver = true;
+    running = false;
+    cancelAnimationFrame(animationId);
+    SFX.gameOver();
+    const ov = document.getElementById('overlay');
+    document.getElementById('ovTitle').textContent = '虚 · 蚀';
+    document.getElementById('ovText').innerHTML =
+      `境界止步于：<b style="color:#b388ff">${rankOf(level)}</b><br>得分：<b style="color:#f4c430">${score}</b>　消除：<b>${lines}</b> 行<br>你的方向感已被逆抚彻底吞噬。`;
+    // 游戏结束时不显示难度选择（直接"再战"沿用上次难度），但保留返回序章
+    document.getElementById('diffRow').style.display = 'none';
+    document.getElementById('restart').textContent = '再战一场';
+    document.getElementById('toMenu').style.display = '';
+    ov.classList.add('show');
+  }
+
+  // ============ 操作（逆抚反转）============
+  // ← 实际向右
+  function moveRight(){
+    if(!cur) return;
+    if(!collide(cur, 1, 0)){ cur.x++; SFX.move(); }
+    else SFX.blocked();
+  }
+  // → 实际向左
+  function moveLeft(){
+    if(!cur) return;
+    if(!collide(cur, -1, 0)){ cur.x--; SFX.move(); }
+    else SFX.blocked();
+  }
+  // ↑ 硬下落
+  function hardDrop(){
+    if(!cur) return;
+    let d=0;
+    while(!collide(cur,0,1)){ cur.y++; d++; }
+    score += d; // 每格 1 分
+    if(d>0) SFX.hardDrop();
+    lockPiece();
+  }
+  // ↓ 旋转
+  function rotate(){
+    if(!cur) return;
+    const m = rotateMatrix(cur.matrix);
+    // 简单墙踢
+    const kicks = [0,-1,1,-2,2];
+    for(const k of kicks){
+      if(!collide(cur, k, 0, m)){
+        cur.x += k;
+        cur.matrix = m;
+        SFX.rotate();
+        return;
+      }
+    }
+    SFX.blocked();
+  }
+
+  function lockPiece(){
+    merge(cur);
+    SFX.lock();
+    clearLines();
+    spawn();
+    updateUI();
+  }
+
+  // ============ 渲染 ============
+  function drawCell(c, x, y, color, size){
+    const g = size/8;
+    const r = Math.max(2, size/8); // 圆角
+    // 主体（圆角矩形）
+    c.beginPath();
+    c.moveTo(x+r, y);
+    c.arcTo(x+size, y, x+size, y+size, r);
+    c.arcTo(x+size, y+size, x, y+size, r);
+    c.arcTo(x, y+size, x, y, r);
+    c.arcTo(x, y, x+size, y, r);
+    c.closePath();
+    // 渐变填充：左上亮 → 右下暗
+    const grad = c.createLinearGradient(x, y, x+size, y+size);
+    grad.addColorStop(0, lighten(color, 0.35));
+    grad.addColorStop(0.5, color);
+    grad.addColorStop(1, darken(color, 0.30));
+    c.fillStyle = grad;
+    c.fill();
+    // 顶部高光带
+    c.save();
+    c.beginPath();
+    c.moveTo(x+r, y+1);
+    c.arcTo(x+size, y+1, x+size, y+size/2, r);
+    c.arcTo(x+size, y+size/2, x, y+size/2, r);
+    c.arcTo(x, y+size/2, x, y+1, r);
+    c.arcTo(x, y+1, x+size, y+1, r);
+    c.closePath();
+    c.clip();
+    const hg = c.createLinearGradient(x, y, x, y+size/2);
+    hg.addColorStop(0, 'rgba(255,255,255,0.42)');
+    hg.addColorStop(1, 'rgba(255,255,255,0)');
+    c.fillStyle = hg;
+    c.fillRect(x, y, size, size/2);
+    c.restore();
+    // 描边
+    c.strokeStyle = 'rgba(10,4,24,0.55)';
+    c.lineWidth = 1;
+    c.stroke();
+  }
+  // 颜色工具：亮/暗
+  function hexToRgb(h){
+    h = h.replace('#','');
+    if(h.length===3) h = h.split('').map(c=>c+c).join('');
+    const n = parseInt(h,16);
+    return {r:(n>>16)&255, g:(n>>8)&255, b:n&255};
+  }
+  function lighten(color, amt){
+    const {r,g,b} = hexToRgb(color);
+    return `rgb(${Math.min(255,r+255*amt)|0},${Math.min(255,g+255*amt)|0},${Math.min(255,b+255*amt)|0})`;
+  }
+  function darken(color, amt){
+    const {r,g,b} = hexToRgb(color);
+    return `rgb(${Math.max(0,r-255*amt)|0},${Math.max(0,g-255*amt)|0},${Math.max(0,b-255*amt)|0})`;
+  }
+
+  function drawGrid(){
+    ctx.fillStyle = '#070213';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    // 网格线
+    ctx.strokeStyle = 'rgba(179,136,255,0.06)';
+    ctx.lineWidth = 1;
+    for(let i=1;i<COLS;i++){
+      ctx.beginPath(); ctx.moveTo(i*BLOCK,0); ctx.lineTo(i*BLOCK,canvas.height); ctx.stroke();
+    }
+    for(let j=1;j<ROWS;j++){
+      ctx.beginPath(); ctx.moveTo(0,j*BLOCK); ctx.lineTo(canvas.width,j*BLOCK); ctx.stroke();
+    }
+    // 已落方块
+    for(let i=0;i<ROWS;i++){
+      for(let j=0;j<COLS;j++){
+        if(grid[i][j]) drawCell(ctx, j*BLOCK, i*BLOCK, grid[i][j], BLOCK);
+      }
+    }
+    // 当前方块的"投影"（鬼影）—— 用圆角描边 + 极淡填充
+    if(cur){
+      let gy = cur.y;
+      while(!collide(cur, 0, gy - cur.y + 1)) gy++;
+      const r = Math.max(2, BLOCK/8);
+      for(let i=0;i<cur.matrix.length;i++){
+        for(let j=0;j<cur.matrix[i].length;j++){
+          if(cur.matrix[i][j]){
+            const x = (cur.x+j)*BLOCK, y = (gy+i)*BLOCK;
+            if(y>=0){
+              ctx.beginPath();
+              ctx.moveTo(x+r,y);
+              ctx.arcTo(x+BLOCK,y,x+BLOCK,y+BLOCK,r);
+              ctx.arcTo(x+BLOCK,y+BLOCK,x,y+BLOCK,r);
+              ctx.arcTo(x,y+BLOCK,x,y,r);
+              ctx.arcTo(x,y,x+BLOCK,y,r);
+              ctx.closePath();
+              ctx.fillStyle = cur.color;
+              ctx.globalAlpha = 0.10;
+              ctx.fill();
+              ctx.globalAlpha = 0.35;
+              ctx.lineWidth = 1.5;
+              ctx.strokeStyle = cur.color;
+              ctx.stroke();
+            }
+          }
+        }
+      }
+      ctx.globalAlpha = 1;
+      // 当前方块
+      for(let i=0;i<cur.matrix.length;i++){
+        for(let j=0;j<cur.matrix[i].length;j++){
+          if(cur.matrix[i][j]){
+            const x=(cur.x+j)*BLOCK, y=(cur.y+i)*BLOCK;
+            if(y>=-BLOCK) drawCell(ctx, x, y, cur.color, BLOCK);
+          }
+        }
+      }
+    }
+  }
+
+  function drawNext(){
+    nextCtx.clearRect(0,0,nextCanvas.width,nextCanvas.height);
+    if(!nextPiece) return;
+    const m = nextPiece.matrix;
+    const s = 18;
+    const w = m[0].length*s, h = m.length*s;
+    const ox = (nextCanvas.width - w)/2;
+    const oy = (nextCanvas.height - h)/2;
+    for(let i=0;i<m.length;i++){
+      for(let j=0;j<m[i].length;j++){
+        if(m[i][j]) drawCell(nextCtx, ox+j*s, oy+i*s, nextPiece.color, s);
+      }
+    }
+  }
+
+  // ============ UI 更新 ============
+  function updateUI(){
+    document.getElementById('score').textContent = score;
+    document.getElementById('level').textContent = level;
+    document.getElementById('lines').textContent = lines;
+    document.getElementById('rank').innerHTML = '境界：<b>'+rankOf(level)+'</b>';
+  }
+
+  // ============ 游戏循环 ============
+  function loop(t){
+    if(!running) return;
+    if(!lastTime) lastTime = t;
+    const dt = t - lastTime;
+    lastTime = t;
+    if(!paused){
+      dropAcc += dt;
+      if(dropAcc >= dropInt){
+        dropAcc = 0;
+        if(cur && !collide(cur,0,1)) cur.y++;
+        else if(cur) lockPiece();
+      }
+      drawGrid();
+    }
+    animationId = requestAnimationFrame(loop);
+  }
+
+  function start(diff){
+    if(diff && DIFFS[diff]) curDiff = diff;
+    const D = DIFFS[curDiff];
+    grid = newGrid();
+    score = 0; lines = 0; level = D.startLevel;
+    dropInt = D.startInt; dropAcc = 0; lastTime = 0;
+    paused = false; gameOver = false; running = true;
+    ensureAudio(); // 用户手势后激活音频上下文
+    nextPiece = randomPiece();
+    spawn();
+    updateUI();
+    document.getElementById('overlay').classList.remove('show');
+    cancelAnimationFrame(animationId);
+    animationId = requestAnimationFrame(loop);
+  }
+
+  // ============ 输入（逆抚反转的核心）============
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'r' || e.key === 'R'){ e.preventDefault(); start(); return; } // R：随时重开本局
+    if(gameOver) return;
+    if(e.key === 'p' || e.key === 'P'){ paused = !paused; return; }
+    if(paused || !running) return;
+
+    switch(e.key){
+      case 'ArrowLeft':  e.preventDefault(); moveRight(); break;  // ← → 右
+      case 'ArrowRight': e.preventDefault(); moveLeft(); break;   // → → 左
+      case 'ArrowUp':    e.preventDefault(); hardDrop(); break;   // ↑ → 硬降
+      case 'ArrowDown':  e.preventDefault(); rotate(); break;     // ↓ → 旋转
+      case ' ':          e.preventDefault(); rotate(); break;    // 空格也可旋转
+    }
+    drawGrid();
+  });
+
+  // 难度选择按钮
+  function selectDiff(d){
+    curDiff = d;
+    document.querySelectorAll('.diff').forEach(b=>{
+      b.classList.toggle('active', b.dataset.diff === d);
+    });
+  }
+  document.querySelectorAll('.diff').forEach(b=>{
+    b.addEventListener('click', function(){
+      selectDiff(b.dataset.diff);
+    });
+  });
+
+  // 再战一场：使用当前选中的难度
+  document.getElementById('restart').addEventListener('click', function(){
+    const active = document.querySelector('.diff.active');
+    const d = active ? active.dataset.diff : curDiff;
+    start(d);
+  });
+  // 游戏中"重来"按钮
+  document.getElementById('restartBtn').addEventListener('click', function(){ start(); });
+  // 返回序章：清空棋盘，重新展示难度选择
+  document.getElementById('toMenu').addEventListener('click', function(){
+    running = false;
+    cancelAnimationFrame(animationId);
+    grid = newGrid();
+    cur = null; nextPiece = null;
+    drawGrid();
+    drawNext();
+    showPrologue();
+  });
+
+  function showPrologue(){
+    const ov = document.getElementById('overlay');
+    document.getElementById('ovTitle').textContent = '逆抚 · 序章';
+    document.getElementById('ovText').innerHTML =
+      '你踏入了平子真子的灵压领域。<br>方向感将被反转——按 <b style="color:#f4c430">←</b> 则方块向右，<br>按 <b style="color:#f4c430">↑</b> 则方块急坠，按 <b style="color:#f4c430">↓</b> 则旋转。<br><br>选择境界，再战一场。';
+    document.getElementById('diffRow').style.display = '';
+    document.getElementById('toMenu').style.display = 'none';
+    document.getElementById('restart').textContent = '再战一场';
+    // 重新选中当前难度
+    document.querySelectorAll('.diff').forEach(b=>{
+      b.classList.toggle('active', b.dataset.diff === curDiff);
+    });
+    ov.classList.add('show');
+  }
+
+  // ============ 初始化：显示序章 ============
+  grid = newGrid();
+  cur = null; nextPiece = null;
+  score = 0; lines = 0; level = 1;
+  drawGrid();
+  drawNext();
+  updateUI();
+  selectDiff('easy');
+  showPrologue();
+
+})();
+</script>
+</body>
+</html>
